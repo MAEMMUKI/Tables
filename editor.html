@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Maemuki · Editor de mesas NFC</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#eef0f6; --surface:#ffffff; --ink:#151827; --muted:#5e6378; --line:#d9dce8;
+  --accent:#4b32e0; --accent-ink:#ffffff; --warm:#e8682a; --chip:#e6e2ff; --good:#0f8f6f; --bad:#c2410c;
+  --display:"Bricolage Grotesque",Georgia,serif; --body:"Figtree",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0f1119; --surface:#181b27; --ink:#eef0fa; --muted:#a2a7bf; --line:#2c3043;
+  --accent:#8f7dff; --accent-ink:#0f1119; --warm:#ff9a5c; --chip:#2a2650; --good:#4fd1a5; --bad:#ff9a5c; color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 150px}
+h1,h2{font-family:var(--display);line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,6vw,42px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:22px}
+.intro{color:var(--muted);max-width:62ch;margin:8px 0 20px}
+.layout{display:grid;gap:24px}
+@media(min-width:900px){.layout{grid-template-columns:1fr 380px;align-items:start}.preview-col{position:sticky;top:20px;order:2}}
+.layout>div{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:grid;gap:14px}
+.panel+.panel{margin-top:16px}
+.panel.hl{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.group{display:grid;gap:8px}
+.fields{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label.f{display:grid;gap:4px;font-size:14px;font-weight:600}
+label.f small{font-weight:400;color:var(--muted)}
+input[type=text],input[type=number],input[type=password],select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;min-width:0}
+input:focus-visible,button:focus-visible,select:focus-visible,textarea:focus-visible,label.upload:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.custom{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted)}
+.custom input{width:38px;height:34px;border:1px solid var(--line);border-radius:10px;padding:2px;background:var(--bg);cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:15px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--chip);box-shadow:inset 0 0 0 1px var(--accent)}
+.chip.font{font-size:17px}
+.bgdot{width:18px;height:18px;border-radius:50%;border:1px solid var(--line);flex:none}
+.logo-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.logo-thumb{width:64px;height:64px;border-radius:14px;border:1px dashed var(--line);display:grid;place-items:center;overflow:hidden;background:repeating-conic-gradient(var(--line) 0 25%,var(--bg) 0 50%) 0 0/14px 14px;color:var(--muted);font-size:12px;text-align:center}
+.logo-thumb img{width:100%;height:100%;object-fit:contain}
+label.upload{font-weight:700;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--accent);color:var(--accent-ink);position:relative}
+label.upload input{position:absolute;opacity:0;width:1px;height:1px}
+.mod{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:10px}
+.mod.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.mod-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mod-top .name{font-weight:700;flex:1;min-width:120px}
+.mod-top .name small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+.ico{width:34px;height:34px;border-radius:10px;background:var(--chip);color:var(--accent);display:grid;place-items:center;flex:none}
+.ico svg{width:18px;height:18px}
+.price{font-family:var(--mono);font-size:13px;display:flex;gap:6px;align-items:center;color:var(--muted)}
+.price input{width:76px;padding:6px 8px;font-family:var(--mono);font-size:13px}
+.toggle{appearance:none;width:46px;height:26px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;flex:none;margin:0}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);transition:transform .15s}
+.toggle:checked{background:var(--accent)}
+.toggle:checked::after{transform:translateX(20px)}
+.toggle:disabled{opacity:.6}
+.mods{display:grid;gap:10px}
+.phone{background:#111;border-radius:40px;padding:12px;max-width:340px;margin:0 auto;box-shadow:0 20px 50px -20px rgba(20,20,60,.45)}
+.screen{display:block;width:100%;height:600px;max-height:70vh;border:0;border-radius:30px;background:#fff}
+.prev-note{text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--bg);z-index:5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:1120px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.tot{display:grid}
+.tot span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;opacity:.7}
+.tot b{font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.tot.big b{color:var(--warm)}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 18px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:10px 14px}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--line);padding:10px 14px}
+.btn:disabled{opacity:.55;cursor:wait}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.msg{font-weight:600;font-size:14px}
+.msg.ok{color:var(--good)} .msg.err{color:var(--bad)}
+.linkbox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.linkbox a{font-family:var(--mono);font-size:14px;color:var(--accent);word-break:break-all;flex:1;min-width:0}
+.breakdown{font-family:var(--mono);font-size:13px;display:grid;gap:4px;font-variant-numeric:tabular-nums}
+.breakdown div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:4px 0}
+details.help{font-size:14px;color:var(--muted)}
+details.help summary{cursor:pointer;font-weight:600;color:var(--ink)}
+details.help ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
+.biz-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+.biz-bar label.f{flex:1;min-width:200px}
+@media (prefers-reduced-motion:reduce){.toggle::after{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Editor de mesas NFC</h1>
+  <p class="intro">Escoge o crea un negocio, diseña su página y toca <b>Publicar</b>. El link que te da es el que programas en los coins. Si después cambias algo y publicas otra vez, el link sigue igual.</p>
+
+  <section class="panel hl" style="margin-bottom:24px">
+    <div class="biz-bar">
+      <label class="f">Negocio<select id="bizSelect"></select></label>
+      <button type="button" class="btn ghost" id="bizNew">+ Nuevo</button>
+      <button type="button" class="btn ghost" id="bizDup">Duplicar</button>
+      <button type="button" class="btn danger" id="bizDel">Borrar</button>
+    </div>
+  </section>
+
+  <div class="layout">
+    <div class="preview-col">
+      <div class="phone"><iframe class="screen" id="screen" title="Vista previa en el celular"></iframe></div>
+      <p class="prev-note">Así se ve al tocar el coin con el celular</p>
+    </div>
+
+    <div>
+      <section class="panel">
+        <span class="label">El negocio</span>
+        <div class="fields">
+          <label class="f">Nombre<input type="text" id="bizName"></label>
+          <label class="f">Frase corta<input type="text" id="bizTag"></label>
+        </div>
+        <label class="f">Mensaje arriba de los botones<input type="text" id="bizHello"></label>
+        <label class="f">Dirección del link <small id="slugHint"></small><input type="text" id="bizSlug" autocapitalize="off" autocomplete="off" spellcheck="false"></label>
+      </section>
+
+      <section class="panel">
+        <h2>Diseño</h2>
+        <div class="group">
+          <span class="label">Logo</span>
+          <div class="logo-row">
+            <div class="logo-thumb" id="logoThumb">Sin logo</div>
+            <label class="upload">Subir logo<input type="file" id="logoFile" accept="image/*"></label>
+            <button type="button" class="btn ghost" id="logoRemove" hidden>Quitar</button>
+            <span class="msg err" id="logoErr" hidden>No pude leer esa imagen. Prueba con PNG o JPG.</span>
+          </div>
+          <div class="chips" id="logoShape"></div>
+        </div>
+        <div class="group"><span class="label">Color de la marca</span><div class="swatches" id="swatches"></div></div>
+        <div class="group"><span class="label">Fondo de la página</span><div class="chips" id="bgModes"></div></div>
+        <div class="group"><span class="label">Letra del nombre</span><div class="chips" id="fontTitle"></div></div>
+        <div class="group"><span class="label">Letra de los botones</span><div class="chips" id="fontBody"></div></div>
+      </section>
+
+      <section class="panel">
+        <div class="row" style="justify-content:space-between"><h2>Botones</h2><span class="label">Precio: instalación · mes</span></div>
+        <div class="mods" id="mods"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Paquete</h2>
+        <div class="fields">
+          <label class="f">Página base (instalación $)<input type="number" id="baseSetup" min="0"></label>
+          <label class="f">Mantenimiento base ($/mes)<input type="number" id="baseMonthly" min="0"></label>
+          <label class="f">Número de mesas<input type="number" id="tables" min="0"></label>
+          <label class="f">Precio por coin ($)<input type="number" id="coinPrice" min="0"></label>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+      </section>
+
+      <section class="panel hl">
+        <h2>Publicar</h2>
+        <div class="row">
+          <button type="button" class="btn" id="publishBtn">Publicar esta página</button>
+          <button type="button" class="btn ghost" id="downloadBtn">Descargar index.html</button>
+        </div>
+        <span class="msg" id="pubMsg" hidden></span>
+        <div class="linkbox" id="linkBox" hidden>
+          <a id="pubLink" href="#" target="_blank" rel="noopener"></a>
+          <button type="button" class="btn ghost" id="copyLink">Copiar link</button>
+        </div>
+        <p style="margin:0;font-size:14px;color:var(--muted)">La primera vez que publicas un negocio, GitHub tarda 1 o 2 minutos en activar el link.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Conexión con GitHub</h2>
+        <div class="fields">
+          <label class="f">Usuario de GitHub<input type="text" id="ghUser" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="tu-usuario"></label>
+          <label class="f">Repositorio<input type="text" id="ghRepo" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="tables"></label>
+        </div>
+        <label class="f">Token <small>Se guarda solo en este aparato</small><input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_..."></label>
+        <div class="row">
+          <button type="button" class="btn ghost" id="importBtn">Traer mis negocios de GitHub</button>
+          <span class="msg" id="impMsg" hidden></span>
+        </div>
+        <details class="help">
+          <summary>Cómo sacar el token</summary>
+          <ol>
+            <li>En GitHub: tu foto → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+            <li>Nombre: <i>editor mesas</i>. Expiración: la que quieras.</li>
+            <li>Repository access: <b>Only select repositories</b> → escoge tu repositorio de mesas.</li>
+            <li>Permissions → Repository permissions → <b>Contents: Read and write</b>.</li>
+            <li><b>Generate token</b>, cópialo y pégalo aquí.</li>
+          </ol>
+        </details>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="bar"><div class="bar-in">
+  <div class="tot"><span>Botones activos</span><b id="tCount">0</b></div>
+  <div class="tot big"><span>Instalación</span><b id="tSetup">$0</b></div>
+  <div class="tot big"><span>Mensual</span><b id="tMonthly">$0</b></div>
+</div></div>
+
+<script>
+const I = {
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  menu:'<path d="M5 6h14M5 12h14M5 18h9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  cam:'<rect x="4" y="4" width="16" height="16" rx="5" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="12" cy="12" r="3.6" fill="none" stroke="currentColor" stroke-width="2.2"/>',
+  note:'<path d="M14 4v10.5a3.5 3.5 0 1 1-2-3.2V4h2zm0 0c.5 2.2 2.2 3.6 4.5 3.8v2.2c-1.7 0-3.3-.6-4.5-1.6z"/>',
+  fb:'<path d="M13.5 21v-7h2.4l.4-2.8h-2.8V9.4c0-.8.3-1.4 1.4-1.4h1.5V5.5a19 19 0 0 0-2.2-.1c-2.2 0-3.6 1.3-3.6 3.7v2.1H8.2V14h2.4v7z"/>',
+  card:'<rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.7-2.3 3-2.3s2.4.7 3 2.3M14 10h4M14 13h3" fill="none" stroke="currentColor" stroke-width="1.8"/>',
+  phone:'<path d="M6.6 3.5l3 .5 1.3 4-2 1.6a12 12 0 0 0 5.5 5.5l1.6-2 4 1.3.5 3a2 2 0 0 1-2.1 2.1A17 17 0 0 1 4.5 5.6 2 2 0 0 1 6.6 3.5z"/>',
+  pin:'<path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/>',
+  wifi:'<path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9 9 0 0 1 12.4 0M9 15.7a4.4 4.4 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.6"/>',
+  bag:'<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>',
+  tag:'<path d="M3 12V4h8l10 10-8 8z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="7.5" cy="8.5" r="1.6"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="2.2"/>'
+};
+const svg = k => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${I[k]}</svg>`;
+
+const COLORS = ['#e2557a','#f43f5e','#db2777','#c026d3','#9333ea','#7c3aed','#4b32e0','#2563eb','#0284c7','#0891b2',
+  '#0d9488','#0f8f6f','#16a34a','#65a30d','#ca8a04','#f59e0b','#ea580c','#c2410c','#b91c1c','#92400e',
+  '#78716c','#334155','#1f2937','#111111','#f9a8d4','#c4b5fd','#a5b4fc','#99f6e4','#d9f99d','#fde68a'];
+const BG_MODES = [
+  {id:'claro', name:'Claro'}, {id:'crema', name:'Crema'}, {id:'tinte', name:'Tinte del color'},
+  {id:'gris', name:'Gris suave'}, {id:'marca', name:'Todo en color'}, {id:'degradado', name:'Degradado'},
+  {id:'oscuro', name:'Oscuro'}, {id:'negro', name:'Negro'}
+];
+const FONTS = {
+  system:{name:'Sistema', css:'system-ui,-apple-system,sans-serif', gf:null},
+  poppins:{name:'Poppins', css:"'Poppins',system-ui,sans-serif", gf:'Poppins:wght@500;600;700;800'},
+  fraunces:{name:'Fraunces', css:"'Fraunces',Georgia,serif", gf:'Fraunces:opsz,wght@9..144,700'},
+  playfair:{name:'Playfair', css:"'Playfair Display',Georgia,serif", gf:'Playfair+Display:wght@700'},
+  dmserif:{name:'DM Serif', css:"'DM Serif Display',Georgia,serif", gf:'DM+Serif+Display'},
+  bricolage:{name:'Bricolage', css:"'Bricolage Grotesque',system-ui,sans-serif", gf:'Bricolage+Grotesque:opsz,wght@12..96,800'},
+  sora:{name:'Sora', css:"'Sora',system-ui,sans-serif", gf:'Sora:wght@500;600;700'},
+  baloo:{name:'Baloo', css:"'Baloo 2',system-ui,sans-serif", gf:'Baloo+2:wght@600;700;800'},
+  righteous:{name:'Righteous', css:"'Righteous',system-ui,sans-serif", gf:'Righteous'},
+  pacifico:{name:'Pacifico', css:"'Pacifico',cursive", gf:'Pacifico'},
+  caveat:{name:'Caveat Brush', css:"'Caveat Brush',cursive", gf:'Caveat+Brush'},
+  lobster:{name:'Lobster', css:"'Lobster',cursive", gf:'Lobster'},
+  nunito:{name:'Nunito', css:"'Nunito',system-ui,sans-serif", gf:'Nunito:wght@500;600;700'},
+  outfit:{name:'Outfit', css:"'Outfit',system-ui,sans-serif", gf:'Outfit:wght@400;500;600'},
+  quicksand:{name:'Quicksand', css:"'Quicksand',system-ui,sans-serif", gf:'Quicksand:wght@500;600;700'},
+  dmsans:{name:'DM Sans', css:"'DM Sans',system-ui,sans-serif", gf:'DM+Sans:wght@400;500;700'},
+  figtree:{name:'Figtree', css:"'Figtree',system-ui,sans-serif", gf:'Figtree:wght@400;500;600'}
+};
+const TITLE_FONTS = ['system','poppins','fraunces','playfair','dmserif','bricolage','sora','baloo','righteous','pacifico','caveat','lobster'];
+const BODY_FONTS = ['system','poppins','nunito','outfit','quicksand','sora','dmsans','figtree'];
+const LOGO_SHAPES = [{id:'redondeado', name:'Cuadro redondeado'}, {id:'circulo', name:'Círculo'}, {id:'libre', name:'Sin marco'}];
+
+const MODS = [
+  {id:'review', label:'Déjanos una reseña', hint:'Link de Google · siempre incluido', icon:'star', kind:'link', on:true, locked:true, setup:0, monthly:0, ph:'https://search.google.com/local/writereview?placeid=...'},
+  {id:'menu', label:'Ver el menú', hint:'Link o PDF del menú', icon:'menu', kind:'link', on:true, setup:75, monthly:15, ph:'Link del menú'},
+  {id:'wa', label:'Escríbenos por WhatsApp', hint:'Número con código de país', icon:'chat', kind:'wa', on:true, setup:40, monthly:0, ph:'Ej. 12015551234'},
+  {id:'ig', label:'Síguenos en Instagram', hint:'Link del perfil', icon:'cam', kind:'link', on:true, setup:25, monthly:0, ph:'https://instagram.com/...'},
+  {id:'tt', label:'Síguenos en TikTok', hint:'Link del perfil', icon:'note', kind:'link', on:false, setup:25, monthly:0, ph:'https://tiktok.com/@...'},
+  {id:'fb', label:'Síguenos en Facebook', hint:'Link de la página', icon:'fb', kind:'link', on:false, setup:20, monthly:0, ph:'https://facebook.com/...'},
+  {id:'vcf', label:'Guardar contacto', hint:'Teléfono que se guarda', icon:'card', kind:'vcf', on:false, setup:30, monthly:0, ph:'+1...'},
+  {id:'call', label:'Llamar', hint:'Teléfono', icon:'phone', kind:'tel', on:false, setup:15, monthly:0, ph:'+1...'},
+  {id:'map', label:'Cómo llegar', hint:'Dirección', icon:'pin', kind:'map', on:false, setup:20, monthly:0, ph:'Dirección completa'},
+  {id:'wifi', label:'Clave del Wi-Fi', hint:'Se muestra en pantalla', icon:'wifi', kind:'text', on:false, setup:25, monthly:5, ph:'Red y clave'},
+  {id:'order', label:'Pedir a domicilio', hint:'Link de pedidos (DoorDash, Uber Eats...)', icon:'bag', kind:'link', on:false, setup:50, monthly:10, ph:'Link de pedidos'},
+  {id:'promo', label:'Promo del día', hint:'Texto que tú actualizas', icon:'tag', kind:'text', on:false, setup:40, monthly:15, ph:'Texto de la promo'},
+  {id:'book', label:'Reservar mesa', hint:'Link de reservas', icon:'cal', kind:'link', on:false, setup:60, monthly:15, ph:'Link de reservas'}
+];
+
+function blankProfile(name){
+  return {
+    name:name||'Nuevo negocio', tag:'', hello:'¡Bienvenido! ¿Qué quieres hacer?', slug:slugify(name||'nuevo-negocio'),
+    color:'#4b32e0', bg:'claro', fontTitle:'poppins', fontBody:'nunito', logo:null, logoShape:'redondeado',
+    baseSetup:150, baseMonthly:29, tables:10, coinPrice:12,
+    mods: MODS.map(m => ({...m, val:''}))
+  };
+}
+function oasisProfile(){
+  const p = blankProfile('Oasis Helados con Queso');
+  Object.assign(p, {tag:'Union City, NJ', slug:'oasis', color:'#e2557a', bg:'crema', fontTitle:'fraunces', fontBody:'nunito', tables:12});
+  const v = {review:'https://search.google.com/local/writereview?placeid=ChIJt_AjvmJZwokR6062rCNfLBs', wa:'19734956143', vcf:'+19734956143', map:'3413 Bergenline Ave, Union City, NJ 07087', promo:'2x1 en conos de 3 a 5 PM'};
+  p.mods.forEach(m => { if (v[m.id]) m.val = v[m.id]; });
+  return p;
+}
+// Completa perfiles viejos o importados con los botones y precios que falten
+function normalize(p){
+  const base = blankProfile(p.name);
+  const out = Object.assign(base, p);
+  const have = Object.fromEntries((p.mods||[]).map(m => [m.id, m]));
+  out.mods = MODS.map(def => {
+    const m = have[def.id] || {};
+    return {...def, val: m.val || '', on: def.locked ? true : !!m.on,
+      setup: m.setup ?? def.setup, monthly: m.monthly ?? def.monthly};
+  });
+  if (!FONTS[out.fontTitle]) out.fontTitle = 'poppins';
+  if (!FONTS[out.fontBody]) out.fontBody = 'nunito';
+  out.slug = slugify(out.slug || out.name);
+  return out;
+}
+
+function slugify(s){
+  return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+    .replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40) || 'negocio';
+}
+
+const KEY = 'maemukiEditor';
+let DB = {current:null, profiles:{}, gh:{user:'maemmuki', repo:'tables', token:''}};
+try {
+  const saved = JSON.parse(localStorage.getItem(KEY));
+  if (saved && saved.profiles) DB = Object.assign(DB, saved);
+} catch(e) {}
+if (!Object.keys(DB.profiles).length) { const o = oasisProfile(); DB.profiles[o.slug] = o; DB.current = o.slug; }
+Object.keys(DB.profiles).forEach(k => DB.profiles[k] = normalize(DB.profiles[k]));
+if (!DB.profiles[DB.current]) DB.current = Object.keys(DB.profiles)[0];
+let S = DB.profiles[DB.current];
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DB)) } catch(e) { showMsg('pubMsg','No pude guardar en este aparato. El logo puede ser muy pesado.','err'); } };
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => '$' + Math.round(n).toLocaleString('en-US');
+const $ = id => document.getElementById(id);
+
+const hexToRgb = h => { h = h.replace('#',''); if (h.length===3) h = h.split('').map(x=>x+x).join(''); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); };
+const rgbToHex = a => '#' + a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix = (a,b,t) => { const A=hexToRgb(a), B=hexToRgb(b); return rgbToHex(A.map((v,i)=>v*(1-t)+B[i]*t)); };
+const lum = h => { const [r,g,b] = hexToRgb(h).map(v=>{v/=255; return v<=0.03928? v/12.92 : Math.pow((v+0.055)/1.055,2.4)}); return 0.2126*r+0.7152*g+0.0722*b; };
+const onColor = h => lum(h) > 0.45 ? '#1b1b22' : '#ffffff';
+
+function theme(c, bg){
+  switch(bg){
+    case 'crema': return {page:'#f8f1e5', card:'#fffaf2', text:'#2a2118', border:'#ecdfcb', iconBg:mix(c,'#fffaf2',0.85), icon:c};
+    case 'tinte': return {page:mix(c,'#ffffff',0.88), card:'#ffffff', text:'#1b1b22', border:mix(c,'#ffffff',0.7), iconBg:mix(c,'#ffffff',0.85), icon:c};
+    case 'gris': return {page:'#eceef2', card:'#ffffff', text:'#1b1b22', border:'#dfe2e8', iconBg:mix(c,'#ffffff',0.85), icon:c};
+    case 'marca': return {page:c, card:'#ffffff', text:'#1b1b22', border:'transparent', iconBg:mix(c,'#ffffff',0.85), icon:mix(c,'#000000',lum(c)>0.45?0.45:0)};
+    case 'degradado': return {page:`linear-gradient(180deg, ${mix(c,'#ffffff',0.75)} 0%, ${mix(c,'#ffffff',0.94)} 60%)`, card:'#ffffff', text:'#1b1b22', border:mix(c,'#ffffff',0.7), iconBg:mix(c,'#ffffff',0.85), icon:c};
+    case 'oscuro': return {page:'#14151c', card:'#1f212b', text:'#f2f2f7', border:'#2d3040', iconBg:mix(c,'#1f212b',0.75), icon:mix(c,'#ffffff',0.25)};
+    case 'negro': return {page:'#000000', card:'#141414', text:'#f5f5f5', border:'#262626', iconBg:mix(c,'#141414',0.75), icon:mix(c,'#ffffff',0.25)};
+    default: return {page:'#faf9fb', card:'#ffffff', text:'#1b1b22', border:'#ececf2', iconBg:mix(c,'#ffffff',0.85), icon:c};
+  }
+}
+function gfUrl(ids){
+  const fams = [...new Set(ids.map(id=>FONTS[id] && FONTS[id].gf).filter(Boolean))];
+  return fams.length ? 'https://fonts.googleapis.com/css2?' + fams.map(f=>'family='+f).join('&') + '&display=swap' : null;
+}
+function vcardHref(){
+  const tel = (S.mods.find(m=>m.id==='vcf').val||'').trim();
+  const addr = (S.mods.find(m=>m.id==='map').val||'').trim();
+  const v = ['BEGIN:VCARD','VERSION:3.0','FN:'+S.name,'ORG:'+S.name, tel?'TEL;TYPE=WORK,VOICE:'+tel:'', addr?'ADR;TYPE=WORK:;;'+addr.replace(/[;\n]/g,' ')+';;;;':'','END:VCARD'].filter(Boolean).join('\r\n');
+  return 'data:text/vcard;charset=utf-8,' + encodeURIComponent(v);
+}
+function hrefFor(m){
+  const v = (m.val||'').trim();
+  if (m.kind==='wa') return v ? 'https://wa.me/' + v.replace(/\D/g,'') : '#';
+  if (m.kind==='map') return v ? 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(v) : '#';
+  if (m.kind==='tel') return v ? 'tel:' + v.replace(/[^\d+]/g,'') : '#';
+  if (m.kind==='vcf') return vcardHref();
+  return v || '#';
+}
+
+// Datos que viajan dentro de la página publicada (sin precios), para poder traerla de vuelta al editor
+function publicData(){
+  const {baseSetup, baseMonthly, tables, coinPrice, ...rest} = S;
+  rest.mods = S.mods.map(({id, on, val}) => ({id, on, val}));
+  return JSON.stringify(rest).replace(/</g,'\\u003c');
+}
+
+function pageHTML(){
+  const on = S.mods.filter(m => m.on);
+  const c = S.color, t = theme(c, S.bg), head = onColor(c);
+  const ft = FONTS[S.fontTitle].css, fb = FONTS[S.fontBody].css;
+  const fontLink = gfUrl([S.fontTitle, S.fontBody]);
+  const items = on.map(m => {
+    if (m.kind==='text') return `<div class="it txt"><span class="i">${svg(m.icon)}</span><span><b>${esc(m.label)}</b><br>${esc(m.val)||'<em>[por completar]</em>'}</span></div>`;
+    const missing = m.kind!=='vcf' && (!m.val || !m.val.trim());
+    const ext = (m.kind==='tel'||m.kind==='vcf') ? '' : ' target="_blank" rel="noopener"';
+    const dl = m.kind==='vcf' ? ` download="${esc(slugify(S.name))}.vcf"` : '';
+    return `<a class="it${m.id==='review'?' main':''}" href="${esc(hrefFor(m))}"${ext}${dl}><span class="i">${svg(m.icon)}</span><span>${esc(m.label)}${missing?' <em>[falta link]</em>':''}</span></a>`;
+  }).join('');
+  const logo = S.logo && /^data:image\//.test(S.logo)
+    ? `<div class="lg img ${S.logoShape}"><img src="${S.logo}" alt="Logo de ${esc(S.name)}"></div>`
+    : `<div class="lg ${S.logoShape==='circulo'?'circulo':''}">${esc((S.name||'?').trim().charAt(0).toUpperCase())}</div>`;
+  const css = `*{box-sizing:border-box}html{min-height:100%;background:${t.page}}body{margin:0;font-family:${fb};color:${t.text};min-height:100%}
+.top{background:${c};color:${head};padding:36px 20px 60px;text-align:center}
+.lg{width:84px;height:84px;border-radius:24px;background:${head==='#ffffff'?'rgba(255,255,255,.22)':'rgba(0,0,0,.08)'};margin:0 auto 12px;display:grid;place-items:center;font-family:${ft};font-size:36px;font-weight:700;overflow:hidden}
+.lg.circulo{border-radius:50%}
+.lg.img{background:#ffffff;padding:8px}
+.lg.img.libre{background:transparent;padding:0;width:auto;height:96px;border-radius:0}
+.lg img{width:100%;height:100%;object-fit:contain;display:block}
+.lg.libre img{width:auto;max-width:240px;height:96px}
+.top h1{margin:0;font-family:${ft};font-size:28px;line-height:1.15;font-weight:700}.top p{margin:6px 0 0;opacity:.85;font-size:15px}
+.list{max-width:480px;margin:-36px auto 24px;padding:0 16px;display:grid;gap:10px}
+.hi{background:${t.card};border-radius:16px;padding:14px 16px;font-weight:600;text-align:center;box-shadow:0 6px 18px -10px rgba(0,0,0,.35)}
+.it{display:flex;align-items:center;gap:12px;background:${t.card};border:1px solid ${t.border};border-radius:16px;padding:14px 16px;text-decoration:none;color:inherit;font-weight:600;font-size:16px;min-height:62px}
+.it.main{background:${c};color:${head};border-color:${c}}
+.it .i{width:38px;height:38px;border-radius:12px;background:${t.iconBg};color:${t.icon};display:grid;place-items:center;flex:none}
+.it.main .i{background:${head==='#ffffff'?'rgba(255,255,255,.22)':'rgba(0,0,0,.08)'};color:${head}}.it svg{width:18px;height:18px}
+.it.txt{font-weight:400}.it em{font-weight:400;font-size:12px;opacity:.7}
+.ft{text-align:center;font-size:12px;opacity:.55;padding:0 0 24px;color:${S.bg==='marca'?head:t.text}}`;
+  const body = `<div class="top">${logo}<h1>${esc(S.name)}</h1>${S.tag?`<p>${esc(S.tag)}</p>`:''}</div><div class="list"><div class="hi">${esc(S.hello)}</div>${items}</div><div class="ft">${esc(S.name)}</div>`;
+  return `<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(S.name)}</title><meta name="theme-color" content="${c}">${fontLink?`<link rel="stylesheet" href="${fontLink}">`:''}<style>${css}</style></head><body>${body}<script type="application/json" id="maemuki-data">${publicData()}<\/script></body></html>`;
+}
+
+function chips(el, list, key, labelFn){
+  $(el).innerHTML = list.map(x => labelFn(x)).join('');
+  $(el).querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.val===S[key]));
+  $(el).onclick = e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    S[key] = b.dataset.val;
+    $(el).querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', x===b));
+    renderAll();
+  };
+}
+function renderDesign(){
+  $('swatches').innerHTML = COLORS.map(c=>`<button type="button" class="sw" style="background:${c}" data-c="${c}" aria-label="Color ${c}" aria-pressed="${c===S.color}"></button>`).join('')
+    + `<label class="custom">Otro<input type="color" id="customColor" value="${S.color}" aria-label="Escoger otro color"></label>`;
+  chips('bgModes', BG_MODES, 'bg', b => `<button type="button" class="chip" data-val="${b.id}"><span class="bgdot" style="background:${theme(S.color,b.id).page}"></span>${b.name}</button>`);
+  chips('fontTitle', TITLE_FONTS, 'fontTitle', id => `<button type="button" class="chip font" data-val="${id}" style="font-family:${FONTS[id].css.replace(/"/g,'&quot;')}">${FONTS[id].name}</button>`);
+  chips('fontBody', BODY_FONTS, 'fontBody', id => `<button type="button" class="chip font" data-val="${id}" style="font-family:${FONTS[id].css.replace(/"/g,'&quot;')}">${FONTS[id].name}</button>`);
+  chips('logoShape', LOGO_SHAPES, 'logoShape', s => `<button type="button" class="chip" data-val="${s.id}">${s.name}</button>`);
+  renderLogoThumb();
+}
+function refreshBgDots(){
+  $('bgModes').querySelectorAll('.chip').forEach(b => b.querySelector('.bgdot').style.background = theme(S.color, b.dataset.val).page);
+}
+function renderLogoThumb(){
+  const has = S.logo && /^data:image\//.test(S.logo);
+  $('logoThumb').innerHTML = has ? `<img src="${S.logo}" alt="Logo subido">` : 'Sin logo';
+  $('logoRemove').hidden = !has;
+}
+function renderMods(){
+  $('mods').innerHTML = S.mods.map((m,i) => `
+    <div class="mod${m.on?' on':''}">
+      <div class="mod-top">
+        <span class="ico">${svg(m.icon)}</span>
+        <span class="name">${esc(m.label)}<small>${esc(m.hint)}</small></span>
+        <span class="price">${m.locked?'incluido':`+$<input type="number" min="0" id="s-${m.id}" data-i="${i}" data-k="setup" value="${m.setup}" aria-label="Instalación ${esc(m.label)}"> · +$<input type="number" min="0" id="m-${m.id}" data-i="${i}" data-k="monthly" value="${m.monthly}" aria-label="Mensual ${esc(m.label)}">`}</span>
+        <input type="checkbox" class="toggle" id="t-${m.id}" data-i="${i}" ${m.on?'checked':''} ${m.locked?'disabled':''} aria-label="Activar ${esc(m.label)}">
+      </div>
+      ${m.on?`<input type="text" id="v-${m.id}" data-i="${i}" data-k="val" value="${esc(m.val)}" placeholder="${esc(m.ph)}" aria-label="${esc(m.hint)}">`:''}
+    </div>`).join('');
+}
+function totals(){
+  const on = S.mods.filter(m => m.on);
+  const extraSetup = on.reduce((a,m)=>a+(+m.setup||0),0);
+  const extraMonthly = on.reduce((a,m)=>a+(+m.monthly||0),0);
+  const coins = (+S.tables||0)*(+S.coinPrice||0);
+  const setup = (+S.baseSetup||0)+extraSetup+coins;
+  const monthly = (+S.baseMonthly||0)+extraMonthly;
+  $('tCount').textContent = on.length;
+  $('tSetup').textContent = money(setup);
+  $('tMonthly').textContent = money(monthly) + '/mes';
+  $('breakdown').innerHTML = `
+    <div><span>Página base</span><span>${money(S.baseSetup||0)}</span></div>
+    <div><span>Botones extra (${on.length-1})</span><span>${money(extraSetup)}</span></div>
+    <div><span>Coins: ${+S.tables||0} × ${money(S.coinPrice||0)}</span><span>${money(coins)}</span></div>
+    <div><b>Instalación total</b><b>${money(setup)}</b></div>
+    <div><b>Mensualidad</b><b>${money(monthly)}/mes</b></div>`;
+}
+const siteLink = slug => {
+  const u = (DB.gh.user||'').trim().toLowerCase(), r = (DB.gh.repo||'').trim();
+  return u && r ? `https://${u}.github.io/${r}/${slug}/` : '';
+};
+function renderLinkInfo(){
+  const l = siteLink(S.slug);
+  $('slugHint').textContent = l ? '· ' + l : '· conecta GitHub para ver el link';
+  if (S.published && l) { $('pubLink').href = l; $('pubLink').textContent = l; $('linkBox').hidden = false; }
+  else $('linkBox').hidden = true;
+}
+
+let raf = 0;
+function renderAll(){
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(() => { $('screen').srcdoc = pageHTML(); totals(); renderLinkInfo(); save(); });
+}
+function renderBizSelect(){
+  const keys = Object.keys(DB.profiles).sort((a,b)=>DB.profiles[a].name.localeCompare(DB.profiles[b].name));
+  $('bizSelect').innerHTML = keys.map(k => `<option value="${esc(k)}"${k===DB.current?' selected':''}>${esc(DB.profiles[k].name)}</option>`).join('');
+}
+function loadProfile(){
+  S = DB.profiles[DB.current];
+  $('bizName').value=S.name; $('bizTag').value=S.tag; $('bizHello').value=S.hello; $('bizSlug').value=S.slug;
+  ['baseSetup','baseMonthly','tables','coinPrice'].forEach(k=>$(k).value=S[k]);
+  $('pubMsg').hidden = true;
+  renderBizSelect(); renderDesign(); renderMods(); renderAll();
+}
+function uniqueKey(base){ let k = base, n = 2; while (DB.profiles[k]) k = base + '-' + n++; return k; }
+function rekey(newSlug){
+  // la llave del perfil sigue a la dirección del link
+  if (newSlug === DB.current) return;
+  const k = uniqueKey(newSlug);
+  DB.profiles[k] = S; delete DB.profiles[DB.current]; DB.current = k; S.slug = k;
+}
+function showMsg(id, text, kind){ const el=$(id); el.textContent=text; el.className='msg '+(kind||''); el.hidden=false; }
+
+function setColor(c){
+  S.color = c;
+  document.querySelectorAll('.sw').forEach(x=>x.setAttribute('aria-pressed', x.dataset.c===c));
+  refreshBgDots(); renderAll();
+}
+
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id==='bizName') { S.name=t.value; renderBizSelect(); }
+  else if (t.id==='bizTag') S.tag=t.value;
+  else if (t.id==='bizHello') S.hello=t.value;
+  else if (t.id==='customColor') return setColor(t.value);
+  else if (['baseSetup','baseMonthly','tables','coinPrice'].includes(t.id)) S[t.id]=+t.value;
+  else if (t.dataset.k) { const m=S.mods[t.dataset.i]; m[t.dataset.k] = t.dataset.k==='val' ? t.value : +t.value; }
+  else if (t.id==='ghUser') { DB.gh.user=t.value.trim(); }
+  else if (t.id==='ghRepo') { DB.gh.repo=t.value.trim(); }
+  else if (t.id==='ghToken') { DB.gh.token=t.value.trim(); save(); return; }
+  else return;
+  renderAll();
+});
+$('bizSlug').addEventListener('change', e => {
+  const s = slugify(e.target.value || S.name);
+  if (S.published && s !== S.slug) showMsg('pubMsg','Cambiaste la dirección: al publicar se crea un link nuevo y los coins viejos seguirán abriendo el anterior.','err');
+  rekey(s); e.target.value = S.slug; S.published = false; renderBizSelect(); renderAll();
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList.contains('toggle')) { S.mods[t.dataset.i].on = t.checked; renderMods(); renderAll(); }
+});
+$('swatches').addEventListener('click', e => {
+  const b = e.target.closest('.sw'); if (!b) return;
+  setColor(b.dataset.c); const cc = $('customColor'); if (cc) cc.value = b.dataset.c;
+});
+
+$('bizSelect').addEventListener('change', e => { DB.current = e.target.value; save(); loadProfile(); });
+$('bizNew').addEventListener('click', () => {
+  const p = blankProfile('Nuevo negocio'); p.slug = uniqueKey(p.slug);
+  DB.profiles[p.slug] = p; DB.current = p.slug; loadProfile(); $('bizName').focus(); $('bizName').select();
+});
+$('bizDup').addEventListener('click', () => {
+  const p = structuredClone(S); p.name = S.name + ' (copia)'; p.slug = uniqueKey(slugify(p.name)); p.published = false;
+  DB.profiles[p.slug] = p; DB.current = p.slug; loadProfile();
+});
+let delArmed = 0;
+$('bizDel').addEventListener('click', () => {
+  if (Object.keys(DB.profiles).length < 2) { $('bizDel').textContent = 'Necesitas al menos uno'; setTimeout(()=>$('bizDel').textContent='Borrar',2000); return; }
+  if (!delArmed) { $('bizDel').textContent = '¿Seguro? Toca otra vez'; delArmed = setTimeout(()=>{delArmed=0;$('bizDel').textContent='Borrar';}, 3500); return; }
+  clearTimeout(delArmed); delArmed = 0; $('bizDel').textContent='Borrar';
+  delete DB.profiles[DB.current]; DB.current = Object.keys(DB.profiles)[0]; loadProfile();
+});
+
+$('logoFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  $('logoErr').hidden = true;
+  const r = new FileReader();
+  r.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 400, k = Math.min(1, max / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width*k); cv.height = Math.round(img.height*k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      S.logo = cv.toDataURL('image/png');
+      renderLogoThumb(); renderAll();
+    };
+    img.onerror = () => { $('logoErr').hidden = false; };
+    img.src = r.result;
+  };
+  r.onerror = () => { $('logoErr').hidden = false; };
+  r.readAsDataURL(f); e.target.value = '';
+});
+$('logoRemove').addEventListener('click', () => { S.logo = null; renderLogoThumb(); renderAll(); });
+
+// GitHub
+function b64(str){ const bytes = new TextEncoder().encode(str); let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); }
+function unb64(s){ const bin = atob(s.replace(/\s/g,'')); const a = new Uint8Array(bin.length); for (let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return new TextDecoder().decode(a); }
+async function gh(method, path, body){
+  const r = await fetch('https://api.github.com' + path, {method, headers:{
+    'Authorization':'Bearer ' + DB.gh.token, 'Accept':'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28',
+    ...(body ? {'Content-Type':'application/json'} : {})}, body: body ? JSON.stringify(body) : undefined});
+  if (r.status === 404 && method === 'GET') return null;
+  if (!r.ok) {
+    if (r.status === 401) throw new Error('El token no es válido o ya venció. Crea uno nuevo y pégalo abajo.');
+    if (r.status === 403) throw new Error('El token no tiene permiso para escribir. Revisa que tenga "Contents: Read and write" en este repositorio.');
+    if (r.status === 404) throw new Error(`No encontré el repositorio "${DB.gh.repo}" en la cuenta "${DB.gh.user}", o el token no tiene acceso a él.`);
+    if (r.status === 409 || r.status === 422) throw new Error('GitHub rechazó el cambio. Espera unos segundos y publica otra vez.');
+    throw new Error('GitHub respondió con un error (' + r.status + '). Intenta de nuevo.');
+  }
+  return r.status === 204 ? {} : r.json();
+}
+function needGh(msgId){
+  if (!DB.gh.user || !DB.gh.repo || !DB.gh.token) { showMsg(msgId,'Primero llena tu usuario, repositorio y token en "Conexión con GitHub".','err'); $('ghUser').focus(); return true; }
+  return false;
+}
+$('publishBtn').addEventListener('click', async () => {
+  if (needGh('pubMsg')) return;
+  const btn = $('publishBtn'); btn.disabled = true; btn.textContent = 'Publicando…';
+  showMsg('pubMsg','Subiendo a GitHub…','');
+  try {
+    const path = `/repos/${encodeURIComponent(DB.gh.user)}/${encodeURIComponent(DB.gh.repo)}/contents/${S.slug}/index.html`;
+    const cur = await gh('GET', path);
+    await gh('PUT', path, {message:`Publicar ${S.name}`, content:b64(pageHTML()), ...(cur && cur.sha ? {sha:cur.sha} : {})});
+    const first = !S.published;
+    S.published = true; save(); renderLinkInfo();
+    showMsg('pubMsg', first ? 'Publicada. El link se activa en 1 o 2 minutos.' : 'Actualizada. Los cambios se ven en 1 minuto más o menos.', 'ok');
+  } catch(err) { showMsg('pubMsg', err.message || 'No se pudo publicar. Revisa tu conexión.', 'err'); }
+  btn.disabled = false; btn.textContent = 'Publicar esta página';
+});
+$('importBtn').addEventListener('click', async () => {
+  if (needGh('impMsg')) return;
+  const btn = $('importBtn'); btn.disabled = true; showMsg('impMsg','Buscando…','');
+  try {
+    const base = `/repos/${encodeURIComponent(DB.gh.user)}/${encodeURIComponent(DB.gh.repo)}/contents`;
+    const list = await gh('GET', base);
+    if (!list) throw new Error(`No encontré el repositorio "${DB.gh.repo}".`);
+    let n = 0;
+    for (const d of list.filter(x => x.type === 'dir')) {
+      const f = await gh('GET', `${base}/${d.name}/index.html`);
+      if (!f || !f.content) continue;
+      const m = unb64(f.content).match(/<script type="application\/json" id="maemuki-data">([\s\S]*?)<\/script>/);
+      if (!m) continue;
+      const data = JSON.parse(m[1]); data.slug = d.name; data.published = true;
+      const old = DB.profiles[d.name];
+      const p = normalize(data);
+      if (old) { // conserva tus precios guardados en este aparato
+        ['baseSetup','baseMonthly','tables','coinPrice'].forEach(k => p[k] = old[k]);
+        p.mods.forEach(mm => { const o = old.mods.find(x=>x.id===mm.id); if (o) { mm.setup=o.setup; mm.monthly=o.monthly; } });
+      }
+      DB.profiles[d.name] = p; n++;
+    }
+    save(); loadProfile();
+    showMsg('impMsg', n ? `Listo: ${n} negocio${n>1?'s':''} traído${n>1?'s':''}.` : 'No encontré páginas publicadas todavía.', n ? 'ok' : '');
+  } catch(err) { showMsg('impMsg', err.message || 'No se pudo conectar con GitHub.', 'err'); }
+  btn.disabled = false;
+});
+$('downloadBtn').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([pageHTML()], {type:'text/html'}));
+  a.download = 'index.html'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+});
+$('copyLink').addEventListener('click', () => {
+  const l = $('pubLink').textContent;
+  const done = () => { $('copyLink').textContent = 'Copiado'; setTimeout(()=>$('copyLink').textContent='Copiar link',2000); };
+  if (navigator.clipboard) navigator.clipboard.writeText(l).then(done).catch(()=>{});
+});
+
+(function init(){
+  const l = document.createElement('link'); l.rel='stylesheet';
+  l.href = gfUrl([...TITLE_FONTS, ...BODY_FONTS]); document.head.appendChild(l);
+  $('ghUser').value = DB.gh.user || ''; $('ghRepo').value = DB.gh.repo || 'tables'; $('ghToken').value = DB.gh.token || '';
+  loadProfile();
+})();
+</script>
+</body>
+</html>
