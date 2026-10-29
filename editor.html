@@ -171,6 +171,12 @@ details.help ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
           <button type="button" class="btn ghost" id="copyLink">Copiar link</button>
         </div>
         <p style="margin:0;font-size:14px;color:var(--muted)">La primera vez que publicas un negocio, GitHub tarda 1 o 2 minutos en activar el link.</p>
+        <details class="help" id="coinBox" hidden>
+          <summary>Links para programar cada coin (uno por mesa)</summary>
+          <p style="margin:6px 0;font-size:14px;color:var(--muted)">Graba en cada coin el link de su mesa. Así el reporte dice cuántas veces tocaron cada mesa.</p>
+          <div class="row"><button type="button" class="btn ghost" id="copyCoins">Copiar todos</button></div>
+          <ol id="coinList" style="font-family:monospace;font-size:13px;word-break:break-all"></ol>
+        </details>
       </section>
 
       <section class="panel">
@@ -180,6 +186,7 @@ details.help ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px}
           <label class="f">Repositorio<input type="text" id="ghRepo" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="tables"></label>
         </div>
         <label class="f">Token <small>Se guarda solo en este aparato</small><input type="password" id="ghToken" autocomplete="off" placeholder="github_pat_..."></label>
+        <label class="f">Código de métricas <small>GoatCounter · ej. maemuki · vacío = sin métricas</small><input type="text" id="ghMetrics" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="maemuki"></label>
         <div class="row">
           <button type="button" class="btn ghost" id="importBtn">Traer mis negocios de GitHub</button>
           <span class="msg" id="impMsg" hidden></span>
@@ -366,6 +373,13 @@ function publicData(){
   return JSON.stringify(rest).replace(/</g,'\\u003c');
 }
 
+// Métricas (GoatCounter): cuenta visitas por mesa (?m=5) y toques en cada botón. Sin datos personales.
+function metricsScript(){
+  const code = (DB.gh.metrics || '').replace(/[^a-z0-9-]/g,''); if (!code) return '';
+  const slug = String(S.slug||'').replace(/[^a-z0-9-]/g,'');
+  return `<script>(function(){var C="${code}",S="${slug}";if(/^(localhost|127\\.|$)/.test(location.hostname)||location.protocol==="about:")return;var q=new URLSearchParams(location.search),m=(q.get("m")||q.get("mesa")||"").replace(/\\D/g,"");var mesa=m?"mesa-"+m:"sin-mesa";function hit(p,e){try{var u="https://"+C+".goatcounter.com/count?p="+encodeURIComponent(p)+"&t="+encodeURIComponent(document.title)+(e?"&e=true":"&r="+encodeURIComponent(document.referrer))+"&rnd="+Math.random().toString(36).slice(2);if(e&&navigator.sendBeacon&&navigator.sendBeacon(u))return;new Image().src=u}catch(x){}}hit("/mesas/"+S+"/"+mesa);document.addEventListener("click",function(ev){var a=ev.target.closest&&ev.target.closest("[data-b]");if(a)hit("mesas/"+S+"/boton/"+a.getAttribute("data-b")+"/"+mesa,1)})})()<\/script>`;
+}
+
 function pageHTML(){
   const on = S.mods.filter(m => m.on);
   const c = S.color, t = theme(c, S.bg), head = onColor(c);
@@ -376,7 +390,7 @@ function pageHTML(){
     const missing = m.kind!=='vcf' && (!m.val || !m.val.trim());
     const ext = (m.kind==='tel'||m.kind==='vcf') ? '' : ' target="_blank" rel="noopener"';
     const dl = m.kind==='vcf' ? ` download="${esc(slugify(S.name))}.vcf"` : '';
-    return `<a class="it${m.id==='review'?' main':''}" href="${esc(hrefFor(m))}"${ext}${dl}><span class="i">${svg(m.icon)}</span><span>${esc(m.label)}${missing?' <em>[falta link]</em>':''}</span></a>`;
+    return `<a class="it${m.id==='review'?' main':''}" data-b="${esc(m.id)}" href="${esc(hrefFor(m))}"${ext}${dl}><span class="i">${svg(m.icon)}</span><span>${esc(m.label)}${missing?' <em>[falta link]</em>':''}</span></a>`;
   }).join('');
   const logo = S.logo && /^data:image\//.test(S.logo)
     ? `<div class="lg img ${S.logoShape}"><img src="${S.logo}" alt="Logo de ${esc(S.name)}"></div>`
@@ -399,7 +413,7 @@ function pageHTML(){
 .it.txt{font-weight:400}.it em{font-weight:400;font-size:12px;opacity:.7}
 .ft{text-align:center;font-size:12px;opacity:.55;padding:0 0 24px;color:${S.bg==='marca'?head:t.text}}`;
   const body = `<div class="top">${logo}<h1>${esc(S.name)}</h1>${S.tag?`<p>${esc(S.tag)}</p>`:''}</div><div class="list"><div class="hi">${esc(S.hello)}</div>${items}</div><div class="ft">${esc(S.name)}</div>`;
-  return `<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(S.name)}</title><meta name="theme-color" content="${c}">${fontLink?`<link rel="stylesheet" href="${fontLink}">`:''}<style>${css}</style></head><body>${body}<script type="application/json" id="maemuki-data">${publicData()}<\/script></body></html>`;
+  return `<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(S.name)}</title><meta name="theme-color" content="${c}">${fontLink?`<link rel="stylesheet" href="${fontLink}">`:''}<style>${css}</style></head><body>${body}<script type="application/json" id="maemuki-data">${publicData()}<\/script>${metricsScript()}</body></html>`;
 }
 
 function chips(el, list, key, labelFn){
@@ -467,7 +481,15 @@ function renderLinkInfo(){
   $('slugHint').textContent = l ? '· ' + l : '· conecta GitHub para ver el link';
   if (S.published && l) { $('pubLink').href = l; $('pubLink').textContent = l; $('linkBox').hidden = false; }
   else $('linkBox').hidden = true;
+  const n = Math.max(0, Math.min(200, +S.tables || 0));
+  $('coinBox').hidden = !(l && n);
+  if (l && n) $('coinList').innerHTML = Array.from({length:n}, (_,i) => `<li>${esc(l)}?m=${i+1}</li>`).join('');
 }
+$('copyCoins').addEventListener('click', () => {
+  const l = siteLink(S.slug), n = Math.max(0, Math.min(200, +S.tables || 0));
+  const txt = Array.from({length:n}, (_,i) => `Mesa ${i+1}: ${l}?m=${i+1}`).join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => { $('copyCoins').textContent = 'Copiados'; setTimeout(()=>$('copyCoins').textContent='Copiar todos',2000); }).catch(()=>{});
+});
 
 let raf = 0;
 function renderAll(){
@@ -511,6 +533,7 @@ document.addEventListener('input', e => {
   else if (t.id==='ghUser') { DB.gh.user=t.value.trim(); }
   else if (t.id==='ghRepo') { DB.gh.repo=t.value.trim(); }
   else if (t.id==='ghToken') { DB.gh.token=t.value.trim(); save(); return; }
+  else if (t.id==='ghMetrics') { DB.gh.metrics=t.value.trim().toLowerCase().replace(/[^a-z0-9-]/g,''); }
   else return;
   renderAll();
 });
@@ -645,6 +668,8 @@ $('copyLink').addEventListener('click', () => {
   const l = document.createElement('link'); l.rel='stylesheet';
   l.href = gfUrl([...TITLE_FONTS, ...BODY_FONTS]); document.head.appendChild(l);
   $('ghUser').value = DB.gh.user || ''; $('ghRepo').value = DB.gh.repo || 'tables'; $('ghToken').value = DB.gh.token || '';
+  if (DB.gh.metrics === undefined) DB.gh.metrics = 'maemuki';
+  $('ghMetrics').value = DB.gh.metrics || '';
   loadProfile();
 })();
 </script>
