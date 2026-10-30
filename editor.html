@@ -58,6 +58,12 @@ label.upload input{position:absolute;opacity:0;width:1px;height:1px}
 .mod-top .name small{display:block;font-weight:400;color:var(--muted);font-size:13px}
 .ico{width:34px;height:34px;border-radius:10px;background:var(--chip);color:var(--accent);display:grid;place-items:center;flex:none}
 .ico svg{width:18px;height:18px}
+.mods-sub{margin:14px 0 0;font-size:15px}.mods-subp{margin:-4px 0 2px;font-size:13px;color:var(--muted)}
+.mod.prop{border-style:dashed}
+.icon-pick{display:flex;flex-wrap:wrap;gap:6px}
+.icon-pick .ip{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--accent);display:grid;place-items:center;cursor:pointer;padding:0}
+.icon-pick .ip svg{width:18px;height:18px}
+.icon-pick .ip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
 .price{font-family:var(--mono);font-size:13px;display:flex;gap:6px;align-items:center;color:var(--muted)}
 .price input{width:76px;padding:6px 8px;font-family:var(--mono);font-size:13px}
 .toggle{appearance:none;width:46px;height:26px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;flex:none;margin:0}
@@ -226,8 +232,19 @@ const I = {
   wifi:'<path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9 9 0 0 1 12.4 0M9 15.7a4.4 4.4 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="19" r="1.6"/>',
   bag:'<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>',
   tag:'<path d="M3 12V4h8l10 10-8 8z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="7.5" cy="8.5" r="1.6"/>',
-  cal:'<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="2.2"/>'
+  cal:'<rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 10h16M9 3v4M15 3v4" stroke="currentColor" stroke-width="2.2"/>',
+  web:'<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M3 12h18M12 3c2.5 2.6 3.7 5.6 3.7 9s-1.2 6.4-3.7 9c-2.5-2.6-3.7-5.6-3.7-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="2"/>',
+  bot:'<rect x="4" y="7" width="16" height="12" rx="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 3v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="13" r="1.6"/><circle cx="15" cy="13" r="1.6"/>',
+  play:'<rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10 9v6l5-3z"/>',
+  photo:'<rect x="3" y="5" width="18" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="9" cy="10" r="1.8"/><path d="M5 17l4.5-4.5 3 3L15 13l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  chart:'<path d="M4 20V4M4 20h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M8 16v-4M12 16V8M16 16v-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+  doc:'<path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12h6M9 16h6M14 3v4h4" fill="none" stroke="currentColor" stroke-width="2"/>',
+  spark:'<path d="M12 2l2.2 6.3L20.5 10l-6.3 2.2L12 18.5l-2.2-6.3L3.5 10l6.3-1.7zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/>',
+  rocket:'<path d="M12 2c3.5 2 5.5 5.6 5.5 10l-2.5 3H9l-2.5-3C6.5 7.6 8.5 4 12 2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="9" r="2"/><path d="M9 18l-1 4M15 18l1 4M12 18v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  gift:'<rect x="3" y="8" width="18" height="5" rx="1.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M5 13v8h14v-8M12 8v13M12 8c-2-4-6-4-6-1.5S9 8 12 8zm0 0c2-4 6-4 6-1.5S15 8 12 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+  heart:'<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>'
 };
+const ICON_CHOICES = ['web','bot','play','photo','chart','doc','spark','rocket','gift','heart','star','chat','pin','cal','tag','bag','phone','cam'];
 const svg = k => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${I[k]}</svg>`;
 
 const COLORS = ['#e2557a','#f43f5e','#db2777','#c026d3','#9333ea','#7c3aed','#4b32e0','#2563eb','#0284c7','#0891b2',
@@ -274,7 +291,13 @@ const MODS = [
   {id:'wifi', label:'Clave del Wi-Fi', hint:'Se muestra en pantalla', icon:'wifi', kind:'text', on:false, setup:25, monthly:5, ph:'Red y clave'},
   {id:'order', label:'Pedir a domicilio', hint:'Link de pedidos (DoorDash, Uber Eats...)', icon:'bag', kind:'link', on:false, setup:50, monthly:10, ph:'Link de pedidos'},
   {id:'promo', label:'Promo del día', hint:'Texto que tú actualizas', icon:'tag', kind:'text', on:false, setup:40, monthly:15, ph:'Texto de la promo'},
-  {id:'book', label:'Reservar mesa', hint:'Link de reservas', icon:'cal', kind:'link', on:false, setup:60, monthly:15, ph:'Link de reservas'}
+  {id:'book', label:'Reservar mesa', hint:'Link de reservas', icon:'cal', kind:'link', on:false, setup:60, monthly:15, ph:'Link de reservas'},
+  // Propuestas: título e ícono editables (para las tarjetas NFC que dejamos a prospectos)
+  {id:'p1', custom:true, label:'Mira tu nueva página web', hint:'Propuesta 1 · título e ícono editables', icon:'web', kind:'link', on:false, setup:0, monthly:0, ph:'Link de la propuesta'},
+  {id:'p2', custom:true, label:'Tu asistente de WhatsApp 24/7', hint:'Propuesta 2 · título e ícono editables', icon:'bot', kind:'link', on:false, setup:0, monthly:0, ph:'Link de la propuesta'},
+  {id:'p3', custom:true, label:'Fotos y videos para tus redes', hint:'Propuesta 3 · título e ícono editables', icon:'play', kind:'link', on:false, setup:0, monthly:0, ph:'Link de la propuesta'},
+  {id:'p4', custom:true, label:'Más reseñas en Google', hint:'Propuesta 4 · título e ícono editables', icon:'chart', kind:'link', on:false, setup:0, monthly:0, ph:'Link de la propuesta'},
+  {id:'p5', custom:true, label:'Plan y precios', hint:'Propuesta 5 · título e ícono editables', icon:'doc', kind:'link', on:false, setup:0, monthly:0, ph:'Link de la propuesta'}
 ];
 
 function blankProfile(name){
@@ -299,8 +322,10 @@ function normalize(p){
   const have = Object.fromEntries((p.mods||[]).map(m => [m.id, m]));
   out.mods = MODS.map(def => {
     const m = have[def.id] || {};
-    return {...def, val: m.val || '', on: def.locked ? true : !!m.on,
+    const o = {...def, val: m.val || '', on: def.locked ? true : !!m.on,
       setup: m.setup ?? def.setup, monthly: m.monthly ?? def.monthly};
+    if (def.custom) { if (m.label) o.label = String(m.label).slice(0,60); if (m.icon && I[m.icon]) o.icon = m.icon; }
+    return o;
   });
   if (!FONTS[out.fontTitle]) out.fontTitle = 'poppins';
   if (!FONTS[out.fontBody]) out.fontBody = 'nunito';
@@ -369,7 +394,7 @@ function hrefFor(m){
 // Datos que viajan dentro de la página publicada (sin precios), para poder traerla de vuelta al editor
 function publicData(){
   const {baseSetup, baseMonthly, tables, coinPrice, ...rest} = S;
-  rest.mods = S.mods.map(({id, on, val}) => ({id, on, val}));
+  rest.mods = S.mods.map(({id, on, val, custom, label, icon}) => custom ? {id, on, val, label, icon} : {id, on, val});
   return JSON.stringify(rest).replace(/</g,'\\u003c');
 }
 
@@ -444,14 +469,16 @@ function renderLogoThumb(){
   $('logoRemove').hidden = !has;
 }
 function renderMods(){
-  $('mods').innerHTML = S.mods.map((m,i) => `
-    <div class="mod${m.on?' on':''}">
+  $('mods').innerHTML = S.mods.map((m,i) => `${m.id==='p1'?'<h3 class="mods-sub">Propuestas para el cliente</h3><p class="mods-subp">Para la tarjeta NFC que le dejas a un prospecto: cambia el título y el ícono, y pega el link de cada propuesta.</p>':''}
+    <div class="mod${m.on?' on':''}${m.custom?' prop':''}">
       <div class="mod-top">
         <span class="ico">${svg(m.icon)}</span>
         <span class="name">${esc(m.label)}<small>${esc(m.hint)}</small></span>
-        <span class="price">${m.locked?'incluido':`+$<input type="number" min="0" id="s-${m.id}" data-i="${i}" data-k="setup" value="${m.setup}" aria-label="Instalación ${esc(m.label)}"> · +$<input type="number" min="0" id="m-${m.id}" data-i="${i}" data-k="monthly" value="${m.monthly}" aria-label="Mensual ${esc(m.label)}">`}</span>
+        <span class="price">${m.locked?'incluido':m.custom?'propuesta':`+$<input type="number" min="0" id="s-${m.id}" data-i="${i}" data-k="setup" value="${m.setup}" aria-label="Instalación ${esc(m.label)}"> · +$<input type="number" min="0" id="m-${m.id}" data-i="${i}" data-k="monthly" value="${m.monthly}" aria-label="Mensual ${esc(m.label)}">`}</span>
         <input type="checkbox" class="toggle" id="t-${m.id}" data-i="${i}" ${m.on?'checked':''} ${m.locked?'disabled':''} aria-label="Activar ${esc(m.label)}">
       </div>
+      ${m.on&&m.custom?`<input type="text" id="l-${m.id}" data-i="${i}" data-k="label" maxlength="60" value="${esc(m.label)}" placeholder="Título del botón" aria-label="Título del botón">
+      <div class="icon-pick" role="group" aria-label="Ícono del botón">${ICON_CHOICES.map(k=>`<button type="button" class="ip" data-i="${i}" data-icon="${k}" aria-pressed="${k===m.icon}" aria-label="Ícono ${k}">${svg(k)}</button>`).join('')}</div>`:''}
       ${m.on?`<input type="text" id="v-${m.id}" data-i="${i}" data-k="val" value="${esc(m.val)}" placeholder="${esc(m.ph)}" aria-label="${esc(m.hint)}">`:''}
     </div>`).join('');
 }
@@ -529,7 +556,8 @@ document.addEventListener('input', e => {
   else if (t.id==='bizHello') S.hello=t.value;
   else if (t.id==='customColor') return setColor(t.value);
   else if (['baseSetup','baseMonthly','tables','coinPrice'].includes(t.id)) S[t.id]=+t.value;
-  else if (t.dataset.k) { const m=S.mods[t.dataset.i]; m[t.dataset.k] = t.dataset.k==='val' ? t.value : +t.value; }
+  else if (t.dataset.k) { const m=S.mods[t.dataset.i]; const k=t.dataset.k; m[k] = (k==='val'||k==='label') ? t.value : +t.value;
+    if (k==='label') { const nm = t.closest('.mod').querySelector('.name'); if (nm && nm.firstChild) nm.firstChild.textContent = t.value || ' '; } }
   else if (t.id==='ghUser') { DB.gh.user=t.value.trim(); }
   else if (t.id==='ghRepo') { DB.gh.repo=t.value.trim(); }
   else if (t.id==='ghToken') { DB.gh.token=t.value.trim(); save(); return; }
@@ -545,6 +573,13 @@ $('bizSlug').addEventListener('change', e => {
 document.addEventListener('change', e => {
   const t = e.target;
   if (t.classList.contains('toggle')) { S.mods[t.dataset.i].on = t.checked; renderMods(); renderAll(); }
+});
+$('mods').addEventListener('click', e => {
+  const b = e.target.closest('.ip'); if (!b) return;
+  const m = S.mods[b.dataset.i]; m.icon = b.dataset.icon;
+  b.parentElement.querySelectorAll('.ip').forEach(x => x.setAttribute('aria-pressed', x===b));
+  const ic = b.closest('.mod').querySelector('.ico'); if (ic) ic.innerHTML = svg(m.icon);
+  renderAll();
 });
 $('swatches').addEventListener('click', e => {
   const b = e.target.closest('.sw'); if (!b) return;
